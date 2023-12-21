@@ -1,3 +1,28 @@
+/*
+    getprocaddress.c
+    a single-file library to obtain the address of the GetProcAddress function.
+    (C) 2023, MIT License, https://github.com/martona/getprocaddress
+    12/21/2023, 0.1.0, initial release
+
+    This is useful for writing code that does not depend on being compile-time linked
+    to any external libraries, including the CRT.
+
+    Include this file in your project. It should be pretty friction-free.
+    
+    Call the following function to obtain the module handle of kernel32:
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    ptr get_kernel32_modulehandle()
+        returns the module handle for kernel32.dll
+
+    Then call the following function to obtain the address of GetProcAddress.
+    We define GetProcAddress_t as a function pointer type for convenience.
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    GetProcAddress_t get_getprocaddress(ptr modulehandle)
+        returns the address of the GetProcAddress function
+        given a module handle (that can be obtained from get_kernel32_modulehandle))
+*/
 #pragma once
 
 #define _GETPROCADDRESS_DEBUG 0
@@ -11,15 +36,16 @@
 
 #if !defined(_BASIC_TYPES_DEFINED)
 #define _BASIC_TYPES_DEFINED
-typedef char                i8;
+typedef char                 i8;
 typedef short               i16;
 typedef int                 i32;
 typedef long long           i64;
-typedef unsigned char       u8;
+typedef unsigned char        u8;
 typedef unsigned short      u16;
 typedef unsigned int        u32;
 typedef unsigned long long  u64;
 typedef void*               ptr;
+typedef unsigned short      wchar;
 #endif
 
 // https://docs.microsoft.com/en-us/windows/win32/debug/pe-format

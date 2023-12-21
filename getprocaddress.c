@@ -117,7 +117,10 @@ inline static int gpa_strcmp(char *a, char *b) {
 }
 
 // our return type
+#ifndef GetProcAddress_t_defined
+#define GetProcAddress_t_defined
 typedef ptr (*GetProcAddress_t)(ptr modulehandle, char *name);
+#endif
 
 // the meat on all the bones
 // given a module handle (that can be obtained from get_kernel32_modulehandle))

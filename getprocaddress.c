@@ -23,8 +23,9 @@
         returns the address of the GetProcAddress function
         given a module handle (that can be obtained from get_kernel32_modulehandle))
 */
-#pragma once
 
+#ifndef _GETPROCADDRESS_C
+#define _GETPROCADDRESS_C
 #define _GETPROCADDRESS_DEBUG 0
 #if _GETPROCADDRESS_DEBUG
 #include <stdio.h>
@@ -177,3 +178,4 @@ int main (int argc, char *argv[]){
     return 0;
 }
 #endif
+#endif // _GETPROCADDRESS_C

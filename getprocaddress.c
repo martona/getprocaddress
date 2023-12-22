@@ -12,21 +12,20 @@
     Call the following function to obtain the module handle of kernel32:
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    ptr get_kernel32_modulehandle()
+    ptr gpa_getkernel32()
         returns the module handle for kernel32.dll
 
     Then call the following function to obtain the address of GetProcAddress.
     We define GetProcAddress_t as a function pointer type for convenience.
 
     ///////////////////////////////////////////////////////////////////////////////////////
-    GetProcAddress_t get_getprocaddress(ptr modulehandle)
+    GetProcAddress_t gpa_getgetprocaddress(ptr modulehandle)
         returns the address of the GetProcAddress function
-        given a module handle (that can be obtained from get_kernel32_modulehandle))
 */
 
 #ifndef _GETPROCADDRESS_C
 #define _GETPROCADDRESS_C
-#define _GETPROCADDRESS_DEBUG 0
+#define _GETPROCADDRESS_DEBUG 1
 #if _GETPROCADDRESS_DEBUG
 #include <stdio.h>
 #include <windows.h>
@@ -72,7 +71,7 @@ typedef struct _gpa_IMAGE_EXPORT_DIRECTORY {
 // just to use a single field from them.
 // besides, there's at least SOME asm required to get at the GS
 // register, so why not do a bit more and save a ton of code?
-ptr get_kernel32_modulehandle() {
+ptr gpa_getkernel32() {
     ptr modulehandle = 0;
     __asm__ (
         "movq %%gs:0x60, %%rax\n\t"     // rax := PEB
@@ -89,7 +88,7 @@ ptr get_kernel32_modulehandle() {
 }
 
 // ditto, __asm__ is messy but worth it for this initial part
-inline static gpa_PIMAGE_EXPORT_DIRECTORY get_image_exportdirectory(ptr modulehandle) {
+inline static gpa_PIMAGE_EXPORT_DIRECTORY gpa_getexportdir(ptr modulehandle) {
     gpa_PIMAGE_EXPORT_DIRECTORY exportdirectory = 0;
     __asm__ (
         "movq %1, %%rcx\n\t"                // rcx := IMAGE_DOS_HEADER
@@ -107,8 +106,8 @@ inline static gpa_PIMAGE_EXPORT_DIRECTORY get_image_exportdirectory(ptr moduleha
     return exportdirectory;
 }
 
-// since we have no external dependencies, define the only
- // CRT function we need
+// since we have no external dependencies, implement the only
+// CRT function we need
 inline static int gpa_strcmp(char *a, char *b) {
     while (*a && *b && *a == *b) {
         a++;
@@ -124,10 +123,10 @@ typedef ptr (*GetProcAddress_t)(ptr modulehandle, char *name);
 #endif
 
 // the meat on all the bones
-// given a module handle (that can be obtained from get_kernel32_modulehandle))
+// given a module handle (that can be obtained from gpa_getkernel32))
 // return the address of the GetProcAddress function
-GetProcAddress_t get_getprocaddress(ptr modulehandle) {
-    gpa_PIMAGE_EXPORT_DIRECTORY exportdirectory = get_image_exportdirectory(modulehandle);
+GetProcAddress_t gpa_getgetprocaddress(ptr modulehandle) {
+    gpa_PIMAGE_EXPORT_DIRECTORY exportdirectory = gpa_getexportdir(modulehandle);
     u32 num_names               = exportdirectory->NumberOfNames;
     ptr addressofnames          = exportdirectory->AddressOfNames + modulehandle;
     ptr addressoffunctions      = exportdirectory->AddressOfFunctions + modulehandle;
@@ -144,15 +143,15 @@ GetProcAddress_t get_getprocaddress(ptr modulehandle) {
     return 0;
 }
 
-// just some debug code
-#if GETPROCADDRESS_DEBUG
+// just some debug code used during development
+#if _GETPROCADDRESS_DEBUG
 int main (int argc, char *argv[]){
     GetModuleHandleA("kernel32.dll");
     GETPROCADDRESS_DEBUG("kernel32.dll: %p\n", GetModuleHandleA("kernel32.dll"));
-    ptr modulehandle = get_kernel32_modulehandle();
+    ptr modulehandle = gpa_getkernel32();
     GETPROCADDRESS_DEBUG("modulehandle: %p\n", modulehandle);
 
-    gpa_PIMAGE_EXPORT_DIRECTORY exportdirectory = get_image_exportdirectory(modulehandle);
+    gpa_PIMAGE_EXPORT_DIRECTORY exportdirectory = gpa_getexportdir(modulehandle);
 
     u32 num_names               = exportdirectory->NumberOfNames;
     u32 num_functions           = exportdirectory->NumberOfFunctions;
@@ -173,9 +172,9 @@ int main (int argc, char *argv[]){
         char *name     = (char*)(nameoffset + modulehandle);
         GETPROCADDRESS_DEBUG("%d: %s: %p\n", i, name, function + modulehandle);
     }
-    GETPROCADDRESS_DEBUG("GetProcAddress: %p\n", get_getprocaddress(modulehandle));
+    GETPROCADDRESS_DEBUG("GetProcAddress: %p\n", gpa_getgetprocaddress(modulehandle));
     GETPROCADDRESS_DEBUG("GetProcAddress: %p\n", GetProcAddress(modulehandle, "GetProcAddress"));
     return 0;
 }
-#endif
+#endif // _GETPROCADDRESS_DEBUG
 #endif // _GETPROCADDRESS_C

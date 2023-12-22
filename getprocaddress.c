@@ -25,7 +25,7 @@
 
 #ifndef _GETPROCADDRESS_C
 #define _GETPROCADDRESS_C
-#define _GETPROCADDRESS_DEBUG 1
+#define _GETPROCADDRESS_DEBUG 0
 #if _GETPROCADDRESS_DEBUG
 #include <stdio.h>
 #include <windows.h>
